@@ -1,0 +1,392 @@
+<!DOCTYPE html>
+<html xmlns:th="https://www.thymeleaf.org">
+<head>
+<title>Item Auction</title>
+<meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+<script src="https://code.jquery.com/jquery-3.2.1.min.js"></script>
+
+
+<script type="text/javascript">
+
+function displayItemList(){
+	hideAllWindow();
+	$(document).ready(function() {
+		
+		document.getElementById("divItemList").style.display = "block";
+		getAllItem();
+	});
+}
+
+function displayItemAdd(){
+	hideAllWindow();
+	$(document).ready(function() {
+		
+		document.getElementById("divItemAdd").style.display = "block";
+		
+	});
+}
+
+function displayItemBidList(){
+	hideAllWindow();
+	$(document).ready(function() {
+		
+		document.getElementById("divItemBidList").style.display = "block";
+		getAllItemBidding();
+	});
+}
+
+function hideAllWindow(){
+	document.getElementById("divItemList").style.display = "none";
+	document.getElementById("divItemAdd").style.display = "none";
+	document.getElementById("divItemBidList").style.display = "none";
+	document.getElementById("divItemBidding").style.display = "none";
+	
+	
+	
+}
+
+
+
+</script>
+
+<script >
+
+function getAllItem(){
+	
+	$(document).ready(function() {
+		var result = "";
+		var error = "";
+		var ip = window.location.hostname;
+		$('#divMessage').html("Sending Request..");
+		
+		$.ajax({ 
+			   method: "Post",
+			   dataType: "json",
+			   url: "http://"+ip+":8080/AuctionAPP/Item/GetItemAll",
+			   success: function(result){   
+				   $('#divMessage').html("");
+				   var tbl = document.getElementById("tblItemList");
+				   for(var i = tbl.rows.length; i > 2;i--)
+				   {
+					   tbl.deleteRow(i -1);
+				   }
+				   if(result != null){
+					   
+					   console.log(JSON.stringify(result.items));
+					   var rowctr = 2;
+					   $.each(result.items, function(idx, items){
+					     /* $("#nav").html('<a href="' + items.itemName + '">' + topic.link_text + "</a>"); */
+					     var row = tbl.insertRow(rowctr);
+					     var cell1 = row.insertCell(0);
+					     var cell2 = row.insertCell(1);
+					     var cell3 = row.insertCell(2);
+					     var cell4 = row.insertCell(3);
+					     var cell5 = row.insertCell(4);
+					     var cell6 = row.insertCell(5);
+					     cell1.innerHTML = items.itemName;
+					     cell2.innerHTML = items.itemDescription;
+					     cell3.innerHTML = items.itemPrice;
+					     cell4.innerHTML = items.itemStartingPrice;
+					     cell5.innerHTML = items.itemDateClosing;
+					     cell6.innerHTML = items.itemStatus;
+					     rowctr++;
+					   });
+				   }
+				   
+			    /*  document.getElementById("txtitemName").value = result.items; */
+			     
+			   },
+			   error:function(error){    
+				   $('#divMessage').html("Error Getting Items.");
+			   }
+			});
+	});
+}
+
+function createItem(){
+	$(document).ready(function() {
+		var result = "";
+		var error = "";
+		var ip = window.location.hostname;
+		var requestItem = {
+				itemName: $("#txtItemName").val(),
+				itemDescription: $("#txtItemDescription").val(),
+				itemPrice: parseFloat($("#txtItemPrice").val()),
+				itemDateClosing: $("#txtItemDateClosing").val(),
+				itemStartingPrice: parseFloat($("#txtItemStartingPrice").val()),
+				itemStatus:'OPENED'		
+		}
+		/* alert(JSON.stringify(requestItem)); */
+		$('#divMessageAdd').html("Sending Request..");
+		document.getElementById("divMessageAdd").style.display = "block";
+		$.ajax({ 
+			   method: "Post",
+			   dataType: "json",
+			   data:JSON.stringify(requestItem),
+			   contentType:"application/json",
+			   url: "http://"+ip+":8080/AuctionAPP/Item/SaveItem",
+			   success: function(result){   
+				   if(result != null){
+					   console.log(JSON.stringify(result.response.responseDesc));
+					   $('#divMessageAdd').html(JSON.stringify(result.response.responseDesc)); 
+					   document.getElementById("divMessageAdd").style.display = "block";
+				   }
+			   },
+			   error:function(error){    
+				   $('#divMessageAdd').html("Error Creating Items.");
+			   }
+			});
+	});
+}
+
+
+function getAllItemBidding(){
+	
+	$(document).ready(function() {
+		var result = "";
+		var error = "";
+		var ip = window.location.hostname;
+		$('#divMessage').html("Sending Request..");
+		
+		$.ajax({ 
+			   method: "Post",
+			   dataType: "json",
+			   url: "http://"+ip+":8080/AuctionAPP/Item/GetItemAll",
+			   success: function(result){   
+				   $('#divMessage').html("");
+				   var tbl = document.getElementById("tblItemBidList");
+				   for(var i = tbl.rows.length; i > 2;i--)
+				   {
+					   tbl.deleteRow(i -1);
+				   }
+				   if(result != null){
+					   
+					   console.log(JSON.stringify(result.items));
+					   var rowctr = 2;
+					   $.each(result.items, function(idx, items){
+					     /* $("#nav").html('<a href="' + items.itemName + '">' + topic.link_text + "</a>"); */
+					     
+					     if((items.itemStatus).toUpperCase() != "CLOSED"){
+					    	 var row = tbl.insertRow(rowctr);
+						     var cell1 = row.insertCell(0);
+						     var cell2 = row.insertCell(1);
+						     var cell3 = row.insertCell(2);
+						     var cell4 = row.insertCell(3);
+						     var cell5 = row.insertCell(4);
+						     var cell6 = row.insertCell(5);
+						     var enableBid = '<a style="cursor: pointer; cursor: hand;" onClick=setItemToBid("'+items.itemName+'","'+items.itemDescription+'",'+items.itemPrice+','+items.itemStartingPrice+',"'+items.itemDateClosing+'")><u>' +  items.itemName + "</u></a>"
+						     cell1.innerHTML = enableBid;
+						     cell2.innerHTML = items.itemDescription;
+						     cell3.innerHTML = items.itemPrice;
+						     cell4.innerHTML = items.itemStartingPrice;
+						     cell5.innerHTML = items.itemDateClosing;
+						     cell6.innerHTML = items.itemStatus;
+						     rowctr++;	 
+					     }
+					   });
+				   }
+				   
+			    /*  document.getElementById("txtitemName").value = result.items; */
+			     
+			   },
+			   error:function(error){    
+				   $('#divMessage').html("Error Getting Items.");
+			   }
+			});
+	});
+}
+
+function setItemToBid(itemName,itemDescription,itemPrice,itemStartingPrice,itemDateClosing){
+	document.getElementById("divItemBidding").style.display = "block";
+	$(document).ready(function() {
+		document.getElementById("txtBidItemName").value = itemName;
+		document.getElementById("txtBidItemDescription").value = itemDescription;
+		document.getElementById("txtBidItemPrice").value = itemPrice;
+		document.getElementById("txtBidItemStartingPrice").value = itemStartingPrice;
+		document.getElementById("txtBidItemDateClosing").value = itemDateClosing;
+		document.getElementById("txtBidItemStatus").value = "ON-GOING-BIDDING";
+		getAllItemBidding();
+	});
+}
+
+function bidItem(status){
+	
+	var bidStatus = status;
+	
+	$(document).ready(function() {
+		var result = "";
+		var error = "";
+		var ip = window.location.hostname;
+		var requestItem = {
+				itemName: $("#txtBidItemName").val(),
+				itemDescription: $("#txtBidItemDescription").val(),
+				itemPrice: parseFloat($("#txtBidItemBiddedPrice").val()),
+				itemDateClosing: $("#txtBidItemDateClosing").val(),
+				itemStartingPrice: parseFloat($("#txtBidItemPrice").val()),
+				itemStatus:bidStatus		
+		}
+		/* alert(JSON.stringify(requestItem)); */
+		$('#divMessageBid').html("Sending Request..");
+		document.getElementById("divMessageBid").style.display = "block";
+		$.ajax({ 
+			   method: "Post",
+			   dataType: "json",
+			   data:JSON.stringify(requestItem),
+			   contentType:"application/json",
+			   url: "http://"+ip+":8080/AuctionAPP/Item/UpdateItem",
+			   success: function(result){   
+				   if(result != null){
+					   console.log(JSON.stringify(result.response.responseDesc));
+					   $('#divMessageBid').html(JSON.stringify(result.response.responseDesc)); 
+					   document.getElementById("divMessageBid").style.display = "block";
+				   }
+			   },
+			   error:function(error){    
+				   $('#divMessageBid').html("Error Creating Items.");
+			   }
+			});
+	});
+	
+}
+
+function bidItemClosed(){
+	
+}
+
+</script>
+
+</head>
+<body onload="hideAllWindow();">
+	<h4>Welcome to item auction application</h4>
+
+	<form action="#" th:action="@{/Auction}" th:object="${auctionForm}"
+		method="post">
+		<p>
+			<input type="button" value="View Item" onclick="displayItemList();"/> 
+			<input type="button" value="Create Item" onclick="displayItemAdd();"/> 
+			<input type="button" value="Bid Item" onclick="displayItemBidList();"/> 
+			<input type="button" value="Reset" onclick="hideAllWindow();"/> 
+		</p>
+	</form>
+	<div id="divItemList" name="divItemList" style="display: none; width: 100%; height: 100%; top:0px; left:0px;">
+	<div id="divMessage"></div>
+	<table name="tblItemList" id="tblItemList" style="border: 1px; width: 70%; text-align: center; ">
+		<tr>
+			<th colspan="6" style="background-color: lime;">Item List</th>
+		</tr>
+		<tr>
+			<th>Name</th>
+			<th>Description</th>
+			<th>Price</th>
+			<th>StartingPrice</th>
+			<th>DateClosing</th>
+			<th>Status</th>
+		</tr>
+	</table>
+	</div>
+	
+	<div id="divItemAdd" name="divItemAdd" style="display: none; width: 100%; height: 100%; top:0px; left:0px;">
+	<div id="divMessageAdd"></div>
+	<table name="tblItemAdd" id="tblItemAdd" border="0"; style="width: 50%; text-align: center; ">
+		<tr>
+			<th colspan="2" style="background-color: lime;">Create Item</th>
+		</tr>
+		<tr>
+			<td>Name</td><td colspan="1" align="left"><input type="text" id="txtItemName" value=""/></td>
+		</tr>
+		<tr>	
+			<td>Description</td><td colspan="1" align="left"><input type="text" id="txtItemDescription" value=""/></td>
+		</tr>
+		<tr>
+			<td>Price</td><td colspan="1" align="left"><input type="text" id="txtItemPrice" value=""/></td>
+		</tr>
+		<tr>
+			<td>StartingPrice</td><td colspan="1" align="left"><input type="text" id="txtItemStartingPrice" value=""/></td>
+		</tr>
+		<tr>
+			<td>DateClosing</td><td colspan="1" align="left"><input type="text" id="txtItemDateClosing" value="" placeholder="MM/DD/YYYY"/></td>
+		</tr>
+		<tr>
+			<td>Status</td>
+				<td colspan="1" align="left">
+					<select name="txtItemStatus" id="txtItemStatus">
+					  <option value="OPEN" selected>OPEN</option>
+					  <option value="ON-GOING-BIDDING">ON-GOING-BIDDING</option>
+					  <option value="CLOSED">CLOSED</option>
+					</select>
+				</td>
+		</tr>
+		<tr>
+			<td colspan="2"><input type="button" value="Add Item" onclick="createItem();"/></td>
+		</tr>
+	</table>
+	</div>
+	
+	<div id="divItemBidList" name="divItemBidList" style="display: none; width: 100%; height: 100%; top:0px; left:0px;">
+	<div id="divMessageBidList"></div>
+	<table name="tblItemBidList" id="tblItemBidList" style="border: 1px; width: 70%; text-align: center; ">
+		<tr>
+			<th colspan="6" style="background-color: lime;">Item List for Bidding</th>
+		</tr>
+		<tr>
+			<th>Name</th>
+			<th>Description</th>
+			<th>Price</th>
+			<th>StartingPrice</th>
+			<th>DateClosing</th>
+			<th>Status</th>
+		</tr>
+	</table>
+	</div>
+	
+	
+	<div id="divItemBidding" name="divItemBidding" style="display: none; width: 100%; height: 100%; left:0px;">
+	<div id="divMessageBid"></div>
+	<table name="tblItemBid" id="tblItemBid" border="0"; style="width: 50%; text-align: center; ">
+		<tr>
+			<th colspan="2" style="background-color: lime;">Bid Item</th>
+		</tr>
+		<tr>
+			<td>Name</td><td colspan="1" align="left"><input type="text" id="txtBidItemName" value=""/></td>
+		</tr>
+		<tr>	
+			<td>Description</td><td colspan="1" align="left"><input type="text" id="txtBidItemDescription" value=""/></td>
+		</tr>
+		<tr>
+			<td>Price</td><td colspan="1" align="left"><input type="text" id="txtBidItemPrice" value=""/></td>
+		</tr>
+		<tr>
+			<td>StartingPrice</td><td colspan="1" align="left"><input type="text" id="txtBidItemStartingPrice" value=""/></td>
+		</tr>
+		<tr>
+			<td>DateClosing</td><td colspan="1" align="left"><input type="text" id="txtBidItemDateClosing" value="" placeholder="MM/DD/YYYY"/></td>
+		</tr>
+		<tr>
+			<td>Status</td>
+			<td colspan="1" align="left">
+				<select name="txtBidItemStatus" id="txtBidItemStatus">
+					  <option value="OPEN">OPEN</option>
+					  <option value="ON-GOING-BIDDING" selected>ON-GOING-BIDDING</option>
+					  <option value="CLOSED">CLOSED</option>
+				</select>
+			</td>
+		</tr>
+		<tr>
+			<td>Bidded Price</td><td colspan="1" align="left"><input type="text" id="txtBidItemBiddedPrice" value=""/></td>
+		</tr>
+		<tr>
+			<td colspan="2"><input type="button" value="Bid" onclick="bidItem('ON-GOING-BIDDING');"/></td>
+		</tr>
+			<tr>
+			<td colspan="2"><input type="button" value="Closed Bid" onclick="bidItem('CLOSED');"/></td>
+		</tr>
+		
+	</table>
+	</div>
+
+
+
+
+</body>
+</html>
+
